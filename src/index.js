@@ -19,7 +19,7 @@ app.listen(PORT, ()=> {
     userTable();
     roleTable();
     permissionTable();
-    businessTable();
+    // businessTable();
     inventoryTable();
     messageTable();
     connectCloudinary();
