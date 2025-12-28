@@ -5,6 +5,7 @@ const permissionTable = require('./models/permissionTable');
 const businessTable = require('./models/businessTable');
 const inventoryTable = require('./models/inventoryTable');
 const messageTable = require('./models/messageTable');
+const connectCloudinary = require('./config/cloudinary');
 
 const app = express();
 app.use(express.json());
@@ -21,4 +22,5 @@ app.listen(PORT, ()=> {
     businessTable();
     inventoryTable();
     messageTable();
+    connectCloudinary();
 })
