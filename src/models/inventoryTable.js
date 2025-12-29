@@ -15,8 +15,10 @@ async function inventoryTable() {
             FOREIGN KEY (business_id)
             REFERENCES businesses(id)
             );
+            
+            CREATE INDEX IF NOT EXISTS idx_inventories_business_id ON inventories(business_id);
             `)
-            console.log(`Inventory table created successfully`);
+        console.log(`Inventory table created successfully`);
     } catch (error) {
         console.error(`Error creating table`, error);
     }

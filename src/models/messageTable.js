@@ -23,11 +23,14 @@ async function messageTable() {
            CONSTRAINT fk_businesses_messages
            FOREIGN KEY (business_id)
            REFERENCES businesses(id)
-           ) ;
-            
+           );
+           
+           CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+           CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);
+           CREATE INDEX IF NOT EXISTS idx_messages_business_id ON messages(business_id);
             `);
 
-            console.log(`Message table created successfully`);
+        console.log(`Message table created successfully`);
     } catch (error) {
         console.error(`Error creating table`, error)
     }

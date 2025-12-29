@@ -6,16 +6,11 @@ async function roleTable() {
             CREATE TABLE IF NOT EXISTS roles(
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL UNIQUE,
-            permission_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            
-            CONSTRAINT fk_permissions_roles
-            FOREIGN KEY (permission_id)
-            REFERENCES permissions(id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             `)
 
-            console.log(`Role table created successfully`);
+        console.log(`Role table created successfully`);
     } catch (error) {
         console.error(`Error creating table`, error);
     }
