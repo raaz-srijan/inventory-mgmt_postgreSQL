@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/raaz-srijan/inventory-mgmt_postgreSQL/main/project_logo.png" alt="TenantFlow Logo" width="200"/>
   <h1>📦 TenantFlow</h1>
   <p><b>Enterprise-Grade Multi-Tenant Inventory Management System</b></p>
   
