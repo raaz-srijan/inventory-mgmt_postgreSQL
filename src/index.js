@@ -15,7 +15,12 @@ const seedData = require('./utils/dbSeed');
 const app = express();
 app.use(express.json());
 
+
 require('dotenv').config();
+
+const cors = require(cors);
+
+app.use(cors());
 
 const PORT = process.env.PORT;
 
