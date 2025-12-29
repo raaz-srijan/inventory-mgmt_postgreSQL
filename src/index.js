@@ -14,12 +14,16 @@ require('dotenv').config();
 
 const PORT = process.env.PORT;
 
+const businessRoute = require("./routes/businessRoute");
+
+app.use("/api/v1/business", businessRoute);
+
 app.listen(PORT, ()=> {
     console.log(`Server started on ${PORT}`);
-    userTable();
-    roleTable();
     permissionTable();
-    // businessTable();
+    roleTable();
+    userTable();
+    businessTable();
     inventoryTable();
     messageTable();
     connectCloudinary();
