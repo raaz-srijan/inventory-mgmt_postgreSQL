@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>📦 TenantFlow</h1>
+  <h1>📦 Inventory Management</h1>
   <p><b>Enterprise-Grade Multi-Tenant Inventory Management System</b></p>
   
   [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
