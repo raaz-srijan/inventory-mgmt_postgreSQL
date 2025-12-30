@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.get("/", checkPermission("manage_platform"), getRoles);
-router.get("/permissions", checkPermission("manage_platform"), getPermissions);
-router.post("/update-permissions", checkPermission("manage_platform"), updateRolePermissions);
+router.get("/", checkPermission("manage_platform", "PLATFORM"), getRoles);
+router.get("/permissions", checkPermission("manage_platform", "PLATFORM"), getPermissions);
+router.post("/update-permissions", checkPermission("manage_platform", "PLATFORM"), updateRolePermissions);
 
 module.exports = router;

@@ -14,10 +14,10 @@ router.post(
   ]), register
 );
 
-router.get("/", authMiddleware, checkPermission("verify_business_registration"), fetchBusiness);
-router.patch("/:id", authMiddleware, checkPermission("verify_business_registration"), updateBusinessStatus);
+router.get("/", authMiddleware, checkPermission("verify_business_registration", "PLATFORM"), fetchBusiness);
+router.patch("/:id", authMiddleware, checkPermission("verify_business_registration", "PLATFORM"), updateBusinessStatus);
 router.get("/:id", authMiddleware, getBusinessById);
-router.delete("/:id", authMiddleware, checkPermission("manage_platform"), deleteBusiness);
+router.delete("/:id", authMiddleware, checkPermission("manage_platform", "PLATFORM"), deleteBusiness);
 
 
 module.exports = router;

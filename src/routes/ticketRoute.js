@@ -7,10 +7,12 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/", checkPermission("report_bugs"), createTicket);
-router.get("/", checkPermission("fix_bugs"), getTickets); // fix_bugs is an admin/super_admin permission, but wait
-// Owners also need to see their own tickets. I'll use a generic permission or handled in controller.
-router.get("/my-tickets", getTickets);
-router.patch("/:id", checkPermission("fix_bugs"), updateTicketStatus);
+router.post("/", createTicket);
+
+router.get("/all", checkPermission("fix_bugs", "PLATFORM"), getTickets);
+
+router.get("/", getTickets);
+
+router.patch("/:id", checkPermission("fix_bugs", "PLATFORM"), updateTicketStatus);
 
 module.exports = router;

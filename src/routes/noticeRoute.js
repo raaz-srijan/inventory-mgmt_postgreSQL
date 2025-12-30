@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/", checkPermission("post_global_announcements"), createNotice); 
-router.post("/business", checkPermission("post_business_notices"), createNotice); 
+router.post("/", checkPermission("post_global_announcements", "PLATFORM"), createNotice);
+router.post("/business", checkPermission("post_business_notices", "BUSINESS"), createNotice);
 router.get("/", getNotices);
 
 module.exports = router;
