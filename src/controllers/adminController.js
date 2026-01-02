@@ -1,6 +1,5 @@
 const pool = require('../config/connectDb');
 
-
 async function fetchUnverifiedBusinesses(req, res) {
     try {
         const result = await pool.query(`
@@ -79,28 +78,36 @@ async function approveBusiness(req, res) {
         if (!business_id)
             return res.status(404).json({ success: false, message: "Invalid business ID" });
 
-        const result = await pool.query(
-            `UPDATE businesses
-             SET is_verified = true,
-             WHERE id = $1
-             RETURNING id, business_name, is_verified`,
-            [business_id]
-        );
+        const businessRes = await pool.query(`
+            UPDATE businesses
+            SET is_verified = true
+            WHERE id = $1
+            RETURNING id, business_name, owner_id, is_verified
+        `, [business_id]);
 
-        if (result.rows.length === 0) {
+        if (businessRes.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "Business not found or already verified"
             });
         }
 
+        const { owner_id } = businessRes.rows[0];
+
+        await pool.query(`
+            UPDATE users
+            SET business_id = $1, role_id = (SELECT id FROM roles WHERE name='owner')
+            WHERE id = $2
+        `, [business_id, owner_id]);
+
         return res.status(200).json({
             success: true,
-            message: "Business has been verified successfully",
-            data: result.rows[0]
+            message: "Business approved successfully",
+            data: businessRes.rows[0]
         });
 
     } catch (error) {
+        console.error("Error approving business:", error);
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -108,6 +115,7 @@ async function approveBusiness(req, res) {
         });
     }
 }
+
 async function deleteBusiness(req, res) {
     try {
         const { business_id } = req.params;
