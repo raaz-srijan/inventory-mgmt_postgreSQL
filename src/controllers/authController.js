@@ -13,7 +13,7 @@ const login = async (req, res) => {
 
         const result = await pool.query(
             `SELECT u.*, r.name as role_name 
-             FROM users up.-
+             FROM users u
              LEFT JOIN roles r ON u.role_id = r.id
              WHERE u.email = $1`,
             [email]
