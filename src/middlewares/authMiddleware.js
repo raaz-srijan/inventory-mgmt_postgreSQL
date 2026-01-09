@@ -9,7 +9,7 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ message: "No token provided" });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
         const userRes = await pool.query(`
             SELECT u.*, r.name as role_name 
@@ -24,7 +24,6 @@ const authMiddleware = async (req, res, next) => {
 
         const user = userRes.rows[0];
 
-        // Fetch permissions for the role
         const permRes = await pool.query(`
             SELECT p.name 
             FROM permissions p

@@ -7,9 +7,16 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/", checkPermission("update_inventory"), createItem);
-router.get("/", checkPermission("view_assigned_inventory"), getItems);
-router.put("/:id", checkPermission("update_inventory"), updateItem);
-router.delete("/:id", checkPermission("update_inventory"), deleteItem);
+router.post("/", checkPermission("update_inventory", "BUSINESS"), createItem);
+router.get("/", (req, res, next) => {
+    const perms = req.user.permissions;
+    if (perms.includes("view_assigned_inventory") || perms.includes("update_inventory") || perms.includes("view_business_dashboard")) {
+        return next();
+    }
+    return res.status(403).json({ message: "Permission denied to view inventory" });
+}, getItems);
+
+router.put("/:id", checkPermission("update_inventory", "BUSINESS"), updateItem);
+router.delete("/:id", checkPermission("update_inventory", "BUSINESS"), deleteItem);
 
 module.exports = router;

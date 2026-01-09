@@ -13,7 +13,7 @@ const login = async (req, res) => {
 
         const result = await pool.query(
             `SELECT u.*, r.name as role_name 
-             FROM users u
+             FROM users up.-
              LEFT JOIN roles r ON u.role_id = r.id
              WHERE u.email = $1`,
             [email]
@@ -52,7 +52,7 @@ const login = async (req, res) => {
 
 const registerStaff = async (req, res) => {
     try {
-        const { name, email, password, phone, role } = req.body; 
+        const { name, email, password, phone, role } = req.body;
         const business_id = req.user.business_id;
 
         if (!business_id) {
@@ -81,4 +81,28 @@ const registerStaff = async (req, res) => {
     }
 };
 
-module.exports = { login, registerStaff };
+const getStaff = async (req, res) => {
+    try {
+        const business_id = req.user.business_id;
+
+        if (!business_id) {
+            return res.status(400).json({ success: false, message: "User is not associated with a business" });
+        }
+
+        const result = await pool.query(
+            `SELECT u.id, u.name, u.email, u.phone, u.role_id, r.name as role_name, u.created_at 
+             FROM users u
+             JOIN roles r ON u.role_id = r.id
+             WHERE u.business_id = $1
+             ORDER BY u.created_at DESC`,
+            [business_id]
+        );
+
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error("Get staff error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = { login, registerStaff, getStaff };

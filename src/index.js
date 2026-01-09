@@ -1,4 +1,5 @@
 const express = require('express');
+
 const pool = require("./config/connectDb");
 const userTable = require('./models/userTable');
 const roleTable = require('./models/roleTable');
@@ -15,10 +16,9 @@ const seedData = require('./utils/dbSeed');
 const app = express();
 app.use(express.json());
 
-
 require('dotenv').config();
 
-const cors = require(cors);
+const cors = require("cors");
 
 app.use(cors());
 

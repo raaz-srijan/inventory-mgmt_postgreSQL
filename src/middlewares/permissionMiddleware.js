@@ -5,10 +5,18 @@ const checkPermission = (requiredPermission, scope = "BUSINESS") => {
         }
 
         const role = req.user.role_name;
+        const userPermissions = req.user.permissions || [];
+
+        const hasRequiredPermission = (perm) => {
+            if (Array.isArray(perm)) {
+                return perm.some(p => userPermissions.includes(p));
+            }
+            return userPermissions.includes(perm);
+        };
 
         if (scope === "PLATFORM") {
-            const hasPermission = req.user.permissions.includes(requiredPermission) || role === 'super_admin';
-            if (!hasPermission) {
+            const isAuthorized = hasRequiredPermission(requiredPermission) || role === 'super_admin';
+            if (!isAuthorized) {
                 return res.status(403).json({ message: "Platform permission denied" });
             }
             return next();
@@ -21,9 +29,9 @@ const checkPermission = (requiredPermission, scope = "BUSINESS") => {
                 });
             }
 
-            const hasPermission = req.user.permissions.includes(requiredPermission);
+            const isAuthorized = hasRequiredPermission(requiredPermission);
 
-            if (!hasPermission) {
+            if (!isAuthorized) {
                 return res.status(403).json({ message: "Business permission denied" });
             }
 
@@ -33,5 +41,6 @@ const checkPermission = (requiredPermission, scope = "BUSINESS") => {
         next();
     };
 };
+
 
 module.exports = checkPermission;

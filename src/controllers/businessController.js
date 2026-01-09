@@ -1,7 +1,13 @@
 const bcrypt = require("bcrypt");
-const { uploadImage, deleteImagefromCloudinary } = require("../utils/uploadImage");
+const {
+  uploadImage,
+  deleteImagefromCloudinary,
+} = require("../utils/uploadImage");
 const pool = require("../config/connectDb");
-const { sendRegistrationEmail, sendVerificationEmail } = require("../utils/sendEmail");
+const {
+  sendRegistrationEmail,
+  sendVerificationEmail,
+} = require("../utils/sendEmail");
 
 async function register(req, res) {
   try {
@@ -13,15 +19,27 @@ async function register(req, res) {
       userName,
       email,
       password,
-      phone
+      phone,
     } = req.body;
 
     const { license_img, citizenship_front, citizenship_back } = req.files;
 
-    if (!businessName || !license_no || !address || !userName || !email || !password || !phone) {
-      return res.status(400).json({ success: false, message: "Please fill all the required fields" });
+    if (
+      !businessName ||
+      !license_no ||
+      !address ||
+      !userName ||
+      !email ||
+      !password ||
+      !phone
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Please fill all the required fields",
+        });
     }
-
 
     const checkData = await pool.query(
       `SELECT license_no FROM businesses WHERE license_no = $1`,
@@ -29,16 +47,25 @@ async function register(req, res) {
     );
 
     if (checkData.rows.length > 0) {
-      return res.status(400).json({ success: false, message: "Business already registered with this license number" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Business already registered with this license number",
+        });
     }
 
     const uploadedLicense = await uploadImage(license_img[0].path);
-    const uploadedCitizenshipFront = await uploadImage(citizenship_front[0].path);
+    const uploadedCitizenshipFront = await uploadImage(
+      citizenship_front[0].path
+    );
     const uploadedCitizenshipBack = await uploadImage(citizenship_back[0].path);
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const roleResult = await pool.query("SELECT id FROM roles WHERE name = 'owner'");
+    const roleResult = await pool.query(
+      "SELECT id FROM roles WHERE name = 'owner'"
+    );
     const ownerRoleId = roleResult.rows[0].id;
 
     const userResult = await pool.query(
@@ -62,32 +89,30 @@ async function register(req, res) {
         uploadedCitizenshipFront.secure_url,
         uploadedCitizenshipBack.secure_url,
         address,
-        userId
+        userId,
       ]
     );
     const businessId = businessResult.rows[0].id;
 
-    await pool.query(
-      `UPDATE users SET business_id = $1 WHERE id = $2`,
-      [businessId, userId]
-    );
+    await pool.query(`UPDATE users SET business_id = $1 WHERE id = $2`, [
+      businessId,
+      userId,
+    ]);
 
     await sendRegistrationEmail(userResult.rows[0], businessResult.rows[0]);
-
 
     return res.status(201).json({
       success: true,
       message: "Business and user registered successfully",
       user: { ...userResult.rows[0], business_id: businessId },
-      business: businessResult.rows[0]
+      business: businessResult.rows[0],
     });
-
   } catch (error) {
     console.error("Register error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -104,25 +129,25 @@ async function fetchBusiness(req, res) {
         b.citizenship_front,
         b.citizenship_back,
         b.address,
+        b.is_verified,
         u.id AS user_id,
         u.name AS owner_name,
         u.email,
         u.phone
       FROM businesses b
-      JOIN users u ON u.business_id = b.id
+      JOIN users u ON b.owner_id = u.id
     `);
 
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
-      data: result.rows
+      data: result.rows,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -135,14 +160,14 @@ async function updateBusinessStatus(req, res) {
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "Business ID is required"
+        message: "Business ID is required",
       });
     }
 
     if (typeof is_verified !== "boolean") {
       return res.status(400).json({
         success: false,
-        message: "is_verified must be a boolean"
+        message: "is_verified must be a boolean",
       });
     }
 
@@ -157,14 +182,15 @@ async function updateBusinessStatus(req, res) {
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Business not found"
+        message: "Business not found",
       });
     }
 
     const ownerRes = await pool.query(
       `SELECT u.name, u.email FROM users u 
        JOIN businesses b ON b.owner_id = u.id 
-       WHERE b.id = $1`, [id]
+       WHERE b.id = $1`,
+      [id]
     );
 
     if (ownerRes.rows.length > 0) {
@@ -174,14 +200,13 @@ async function updateBusinessStatus(req, res) {
     return res.status(200).json({
       success: true,
       message: "Business verification status updated successfully",
-      data: result.rows[0]
+      data: result.rows[0],
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -193,43 +218,50 @@ async function getBusinessById(req, res) {
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "Business ID is required"
+        message: "Business ID is required",
       });
     }
 
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT
         b.id AS business_id,
         b.name AS business_name,
         b.license_no,
+        b.license_img,
+        b.citizenship_no,
+        b.citizenship_front,
+        b.citizenship_back,
         b.address,
+        b.is_verified,
         u.id AS user_id,
         u.name AS owner_name,
         u.email,
         u.phone
       FROM businesses b
-      LEFT JOIN users u ON u.business_id = b.id
+      LEFT JOIN users u ON b.owner_id = u.id
       WHERE b.id = $1
-    `, [id]);
+    `,
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Business not found"
+        message: "Business not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Business fetched successfully",
-      data: result.rows[0]
+      data: result.rows[0],
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -250,7 +282,9 @@ async function deleteBusiness(req, res) {
     );
 
     if (businessResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Business not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Business not found" });
     }
 
     const business = businessResult.rows[0];
@@ -258,7 +292,7 @@ async function deleteBusiness(req, res) {
     const publicIds = [
       business.license_img,
       business.citizenship_front,
-      business.citizenship_back
+      business.citizenship_back,
     ];
 
     for (const publicId of publicIds) {
@@ -269,20 +303,23 @@ async function deleteBusiness(req, res) {
 
     await pool.query(`DELETE FROM businesses WHERE id = $1`, [id]);
 
-    return res.status(200).json({ success: true, message: "Business deleted successfully" });
-
+    return res
+      .status(200)
+      .json({ success: true, message: "Business deleted successfully" });
   } catch (error) {
     console.error("Delete business error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 }
 
-
-
-
-
-module.exports = { register, fetchBusiness, updateBusinessStatus, getBusinessById, deleteBusiness };
+module.exports = {
+  register,
+  fetchBusiness,
+  updateBusinessStatus,
+  getBusinessById,
+  deleteBusiness,
+};

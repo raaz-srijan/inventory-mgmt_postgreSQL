@@ -7,7 +7,8 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/", checkPermission("post_global_announcements", "PLATFORM"), createNotice);
+// Admins or Super Admins can post platform notices
+router.post("/", checkPermission(["post_global_announcements", "post_admin_notices"], "PLATFORM"), createNotice);
 router.post("/business", checkPermission("post_business_notices", "BUSINESS"), createNotice);
 router.get("/", getNotices);
 
