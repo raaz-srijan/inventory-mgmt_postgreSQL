@@ -18,7 +18,7 @@ const getRoles = async (req, res) => {
 
 const updateRolePermissions = async (req, res) => {
     try {
-        const { roleId, permissions } = req.body; 
+        const { roleId, permissions } = req.body;
 
         await pool.query("DELETE FROM role_permissions WHERE role_id = $1", [roleId]);
 
@@ -48,4 +48,36 @@ const getPermissions = async (req, res) => {
     }
 }
 
-module.exports = { getRoles, updateRolePermissions, getPermissions };
+const createRole = async (req, res) => {
+    try {
+        const { name, level } = req.body;
+        if (!name || !level) return res.status(400).json({ message: "Name and level are required" });
+
+        const result = await pool.query(
+            "INSERT INTO roles (name, level) VALUES ($1, $2) RETURNING *",
+            [name, level]
+        );
+        res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+        console.error("Create role error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const createPermission = async (req, res) => {
+    try {
+        const { name, group_name } = req.body;
+        if (!name || !group_name) return res.status(400).json({ message: "Name and group_name are required" });
+
+        const result = await pool.query(
+            "INSERT INTO permissions (name, group_name) VALUES ($1, $2) RETURNING *",
+            [name, group_name]
+        );
+        res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+        console.error("Create permission error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = { getRoles, updateRolePermissions, getPermissions, createRole, createPermission };

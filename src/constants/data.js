@@ -40,6 +40,7 @@ const permissionsData = [
 
   // COMMON
   { name: "chat_internal", group: "common" },
+  { name: "send_messages", group: "common" },
   { name: "report_bugs", group: "common" },
 ];
 
@@ -50,6 +51,7 @@ const rolePermissions = {
     "fix_bugs",
     "post_global_announcements",
     "chat_internal",
+    "send_messages",
   ],
 
   admin: [
@@ -57,6 +59,7 @@ const rolePermissions = {
     "approve_owner_accounts",
     "post_admin_notices",
     "chat_internal",
+    "send_messages",
   ],
 
   owner: [
@@ -66,6 +69,7 @@ const rolePermissions = {
     "view_business_dashboard",
     "post_business_notices",
     "chat_internal",
+    "send_messages",
     "report_bugs",
   ],
 
@@ -76,6 +80,7 @@ const rolePermissions = {
     "view_manager_dashboard",
     "request_permission_changes",
     "chat_internal",
+    "send_messages",
     "report_bugs",
   ],
 

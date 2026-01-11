@@ -7,6 +7,7 @@ const pool = require("../config/connectDb");
 const {
   sendRegistrationEmail,
   sendVerificationEmail,
+  sendBusinessApprovalEmail,
 } = require("../utils/sendEmail");
 
 async function register(req, res) {
@@ -119,6 +120,13 @@ async function register(req, res) {
 
 async function fetchBusiness(req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const countRes = await pool.query("SELECT COUNT(*) FROM businesses");
+    const total = parseInt(countRes.rows[0].count);
+
     const result = await pool.query(`
       SELECT
         b.id AS business_id,
@@ -133,15 +141,24 @@ async function fetchBusiness(req, res) {
         u.id AS user_id,
         u.name AS owner_name,
         u.email,
-        u.phone
+        u.phone,
+        b.created_at
       FROM businesses b
       JOIN users u ON b.owner_id = u.id
-    `);
+      ORDER BY b.created_at DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
       data: result.rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     return res.status(500).json({
@@ -194,7 +211,11 @@ async function updateBusinessStatus(req, res) {
     );
 
     if (ownerRes.rows.length > 0) {
-      await sendVerificationEmail(ownerRes.rows[0], is_verified);
+      if (is_verified) {
+        await sendBusinessApprovalEmail(ownerRes.rows[0]);
+      } else {
+        await sendVerificationEmail(ownerRes.rows[0], is_verified);
+      }
     }
 
     return res.status(200).json({
@@ -208,6 +229,24 @@ async function updateBusinessStatus(req, res) {
       message: "Internal Server Error",
       error: error.message,
     });
+  }
+}
+
+async function getMyBusiness(req, res) {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      `SELECT * FROM businesses WHERE owner_id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Business not found" });
+    }
+
+    res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
@@ -316,10 +355,101 @@ async function deleteBusiness(req, res) {
   }
 }
 
+async function updateBusinessProfile(req, res) {
+  try {
+    const userId = req.user.id;
+    const { name, license_no, address, citizenship_no } = req.body;
+
+    // Get current business data to compare
+    const currentRes = await pool.query(
+      "SELECT * FROM businesses WHERE owner_id = $1",
+      [userId]
+    );
+
+    if (currentRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Business not found" });
+    }
+
+    const current = currentRes.rows[0];
+    let is_verified = current.is_verified;
+
+    // Check if sensitive info changed
+    if (
+      (name && name !== current.name) ||
+      (license_no && license_no !== current.license_no) ||
+      (address && address !== current.address) ||
+      (citizenship_no && citizenship_no !== current.citizenship_no)
+    ) {
+      is_verified = false;
+    }
+
+    // Handle image updates if needed
+    let license_img = current.license_img;
+    let citizenship_front = current.citizenship_front;
+    let citizenship_back = current.citizenship_back;
+
+    if (req.files) {
+      const {
+        license_img: newLicense,
+        citizenship_front: newCF,
+        citizenship_back: newCB
+      } = req.files;
+
+      if (newLicense) {
+        if (current.license_img) await deleteImagefromCloudinary(current.license_img);
+        const uploaded = await uploadImage(newLicense[0].path);
+        license_img = uploaded.secure_url;
+        is_verified = false;
+      }
+      if (newCF) {
+        if (current.citizenship_front) await deleteImagefromCloudinary(current.citizenship_front);
+        const uploaded = await uploadImage(newCF[0].path);
+        citizenship_front = uploaded.secure_url;
+        is_verified = false;
+      }
+      if (newCB) {
+        if (current.citizenship_back) await deleteImagefromCloudinary(current.citizenship_back);
+        const uploaded = await uploadImage(newCB[0].path);
+        citizenship_back = uploaded.secure_url;
+        is_verified = false;
+      }
+    }
+
+    const result = await pool.query(
+      `UPDATE businesses 
+       SET name = COALESCE($1, name), 
+           license_no = COALESCE($2, license_no), 
+           address = COALESCE($3, address), 
+           citizenship_no = COALESCE($4, citizenship_no),
+           is_verified = $5,
+           license_img = $6,
+           citizenship_front = $7,
+           citizenship_back = $8
+       WHERE owner_id = $9
+       RETURNING *`,
+      [name, license_no, address, citizenship_no, is_verified, license_img, citizenship_front, citizenship_back, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: is_verified
+        ? "Business profile updated successfully"
+        : "Business profile updated successfully. Since sensitive information was changed, your verification status has been reset. Please wait for an admin to verify your profile again.",
+      data: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error("Update business profile error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 module.exports = {
   register,
   fetchBusiness,
   updateBusinessStatus,
   getBusinessById,
   deleteBusiness,
+  updateBusinessProfile,
+  getMyBusiness,
 };

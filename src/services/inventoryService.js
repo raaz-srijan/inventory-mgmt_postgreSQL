@@ -14,14 +14,28 @@ class InventoryService {
         return result.rows[0];
     }
 
-    async getBusinessItems(businessId) {
+    async getBusinessItems(businessId, page = 1, limit = 10) {
         if (!businessId) throw new Error("Business context required to fetch inventory");
 
+        const offset = (page - 1) * limit;
+
+        const countRes = await pool.query("SELECT COUNT(*) FROM inventories WHERE business_id = $1", [businessId]);
+        const total = parseInt(countRes.rows[0].count);
+
         const result = await pool.query(
-            "SELECT * FROM inventories WHERE business_id = $1 ORDER BY created_at DESC",
-            [businessId]
+            "SELECT * FROM inventories WHERE business_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            [businessId, limit, offset]
         );
-        return result.rows;
+
+        return {
+            items: result.rows,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async updateItem(businessId, itemId, data) {

@@ -12,6 +12,8 @@ async function userTable() {
             business_id INTEGER,
             role_id INTEGER,
             is_verified BOOLEAN DEFAULT FALSE,
+            reset_password_token VARCHAR(255),
+            reset_password_expires TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
             CHECK(char_length(password) >=6),

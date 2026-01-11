@@ -12,8 +12,10 @@ const createItem = async (req, res) => {
 
 const getItems = async (req, res) => {
     try {
-        const items = await inventoryService.getBusinessItems(req.user.business_id);
-        res.status(200).json({ success: true, data: items });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await inventoryService.getBusinessItems(req.user.business_id, page, limit);
+        res.status(200).json({ success: true, ...result });
     } catch (error) {
         console.error("Get items error:", error);
         res.status(error.message.includes("context") ? 403 : 500).json({ success: false, message: error.message });

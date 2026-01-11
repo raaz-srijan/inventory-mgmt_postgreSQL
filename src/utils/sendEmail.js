@@ -77,6 +77,25 @@ const sendStaffWelcomeEmail = async (user, tempPassword, role) => {
     await sendEmail(user.email, subject, html);
 };
 
+const sendBusinessApprovalEmail = async (user) => {
+    const subject = "Business Approved - Welcome to Inventory-Mgmt";
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+            <h2 style="color: #27ae60;">Congratulations! Your Business is Approved</h2>
+            <p>Hi <strong>${user.name}</strong>,</p>
+            <p>We are pleased to inform you that your business registration has been verified and approved.</p>
+            <p>You can now log in to your dashboard and start managing your inventory and staff.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.FRONTEND_URL}/login" style="display: inline-block; padding: 12px 25px; background-color: #27ae60; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Dashboard</a>
+            </div>
+
+            <p>Best regards,<br>The Inventory-Mgmt Team</p>
+        </div>
+    `;
+    await sendEmail(user.email, subject, html);
+};
+
 const sendTicketUpdateEmail = async (user, ticket, newStatus) => {
     const subject = `Ticket Update: [#${ticket.id}] ${ticket.title}`;
     const html = `
@@ -95,9 +114,30 @@ const sendTicketUpdateEmail = async (user, ticket, newStatus) => {
     await sendEmail(user.email, subject, html);
 };
 
+const sendPasswordResetEmail = async (user, resetLink) => {
+    const subject = "Password Reset Request - Inventory-Mgmt";
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+            <h2 style="color: #2c3e50;">Password Reset Request</h2>
+            <p>Hi <strong>${user.name}</strong>,</p>
+            <p>You are receiving this email because you (or someone else) have requested the reset of the password for your account.</p>
+            <p>Please click on the following button to complete the process:</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetLink}" style="display: inline-block; padding: 12px 25px; background-color: #e67e22; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset My Password</a>
+            </div>
+            <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+            <p>This link will expire in 1 hour.</p>
+            <p>Best regards,<br>The Inventory-Mgmt Team</p>
+        </div>
+    `;
+    await sendEmail(user.email, subject, html);
+};
+
 module.exports = {
     sendRegistrationEmail,
     sendVerificationEmail,
     sendStaffWelcomeEmail,
-    sendTicketUpdateEmail
+    sendTicketUpdateEmail,
+    sendBusinessApprovalEmail,
+    sendPasswordResetEmail
 };

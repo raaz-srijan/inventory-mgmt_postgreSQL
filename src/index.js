@@ -31,6 +31,7 @@ const ticketRoute = require("./routes/ticketRoute");
 const roleRoute = require("./routes/roleRoute");
 const noticeRoute = require("./routes/noticeRoute");
 const messageRoute = require("./routes/messageRoute");
+const adminRoute = require("./routes/adminRoute"); // Added
 
 app.use("/api/v1/business", businessRoute);
 app.use("/api/v1/auth", authRoute);
@@ -39,6 +40,7 @@ app.use("/api/v1/tickets", ticketRoute);
 app.use("/api/v1/roles", roleRoute);
 app.use("/api/v1/notices", noticeRoute);
 app.use("/api/v1/messages", messageRoute);
+app.use("/api/v1/admins", adminRoute); // Added
 
 async function syncDb() {
     try {
