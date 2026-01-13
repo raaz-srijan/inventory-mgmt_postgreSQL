@@ -3,26 +3,76 @@ const pool = require("../config/connectDb");
 const sendMessage = async (req, res) => {
   try {
     const { receiver_id, content } = req.body;
-    const sender_id = req.user.id;
-    let business_id = req.user.business_id;
+    const sender = req.user;
 
-    if (!business_id) {
-      const receiverRes = await pool.query(
-        "SELECT business_id FROM users WHERE id = $1",
-        [receiver_id]
-      );
-      if (receiverRes.rows.length > 0) {
-        business_id = receiverRes.rows[0].business_id;
-      }
+    const receiverRes = await pool.query(
+      `SELECT u.id, u.business_id, r.name as role_name 
+       FROM users u 
+       JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = $1`,
+      [receiver_id]
+    );
+
+    if (receiverRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Receiver not found" });
     }
+
+    const receiver = receiverRes.rows[0];
+    let allowed = false;
+
+    // 2. Strict Permission Matrix
+    switch (sender.role_name) {
+      case 'super_admin':
+      case 'admin':
+        if (['super_admin', 'admin', 'owner'].includes(receiver.role_name)) {
+          allowed = true;
+        }
+        break;
+
+      case 'owner':
+        if (['super_admin', 'admin'].includes(receiver.role_name)) {
+          allowed = true;
+        }
+        if (sender.business_id === receiver.business_id) {
+          allowed = true;
+        }
+        break;
+
+      case 'manager':
+        if (sender.business_id === receiver.business_id &&
+          ['owner', 'staff', 'manager'].includes(receiver.role_name)) {
+          allowed = true;
+        }
+        break;
+
+      case 'staff':
+        if (sender.business_id === receiver.business_id &&
+          ['manager'].includes(receiver.role_name)) {
+          allowed = true;
+        }
+        break;
+
+      default:
+        allowed = false;
+    }
+
+    if (!allowed) {
+      return res.status(403).json({
+        success: false,
+        message: `Permission denied: ${sender.role_name} cannot message ${receiver.role_name}`
+      });
+    }
+
+    let business_id = sender.business_id || receiver.business_id;
 
     const result = await pool.query(
       "INSERT INTO messages (sender_id, receiver_id, content, business_id) VALUES ($1, $2, $3, $4) RETURNING *",
-      [sender_id, receiver_id, content, business_id]
+      [sender.id, receiver_id, content, business_id]
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
+    console.error("Send message error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
