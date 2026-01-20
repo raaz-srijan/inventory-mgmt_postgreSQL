@@ -46,6 +46,7 @@ const sendMessage = async (req, res) => {
         break;
 
       case 'staff':
+        // Staff can only message Managers within the same business.
         if (sender.business_id === receiver.business_id &&
           ['manager'].includes(receiver.role_name)) {
           allowed = true;
@@ -125,7 +126,7 @@ const getChatUsers = async (req, res) => {
                 ORDER BY r.name ASC, u.name ASC
             `;
       params = [currentUser.business_id, currentUser.id];
-    } else {
+    } else if (currentUser.role_name === "manager") {
       query = `
                 SELECT u.id, u.name, u.email, u.role_id, r.name as role_name, u.business_id, b.name as business_name
                 FROM users u
@@ -133,6 +134,19 @@ const getChatUsers = async (req, res) => {
                 LEFT JOIN businesses b ON u.business_id = b.id
                 WHERE (u.business_id = $1 OR u.id = (SELECT owner_id FROM businesses WHERE id = $1))
                 AND u.id != $2
+                ORDER BY r.name ASC, u.name ASC
+            `;
+      params = [currentUser.business_id, currentUser.id];
+    } else {
+      // Staff
+      query = `
+                SELECT u.id, u.name, u.email, u.role_id, r.name as role_name, u.business_id, b.name as business_name
+                FROM users u
+                JOIN roles r ON u.role_id = r.id
+                LEFT JOIN businesses b ON u.business_id = b.id
+                WHERE (u.business_id = $1 OR u.id = (SELECT owner_id FROM businesses WHERE id = $1))
+                AND u.id != $2
+                AND r.name IN ('owner', 'manager')
                 ORDER BY r.name ASC, u.name ASC
             `;
       params = [currentUser.business_id, currentUser.id];

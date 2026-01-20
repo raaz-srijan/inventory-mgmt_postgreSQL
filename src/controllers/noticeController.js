@@ -23,7 +23,11 @@ const createNotice = async (req, res) => {
             if (!business_id) {
                 return res.status(400).json({ success: false, message: "No business context found for business notice" });
             }
-            const canPostBusiness = permissions.includes('manage_business') || permissions.includes('manage_staff_roles'); // heuristic
+            const canPostBusiness = permissions.includes('manage_business') || permissions.includes('manage_staff_roles');
+
+            if (!canPostBusiness) {
+                return res.status(403).json({ success: false, message: "Unauthorized to post business notices" });
+            }
         }
 
         const result = await pool.query(

@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const pool = require("../config/connectDb");
-const { generateJWT } = require("../utils/generateToken");
+const { generateJWT, verifyJWT } = require("../utils/generateToken");
 const { sendStaffWelcomeEmail, sendPasswordResetEmail } = require("../utils/sendEmail");
 
 const login = async (req, res) => {
@@ -168,7 +168,6 @@ const updateStaff = async (req, res) => {
         const { name, phone, role_id } = req.body;
         const business_id = req.user.business_id;
 
-        // Verify the staff belongs to the same business
         const checkRes = await pool.query("SELECT * FROM users WHERE id = $1 AND business_id = $2", [id, business_id]);
         if (checkRes.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Staff member not found in your business" });
@@ -225,18 +224,11 @@ const forgotPassword = async (req, res) => {
 
         const userRes = await pool.query("SELECT id, name, email FROM users WHERE email = $1", [email]);
         if (userRes.rows.length === 0) {
-            // For security, don't reveal if email exists
             return res.status(200).json({ success: true, message: "If that email exists in our system, we've sent a reset link." });
         }
 
         const user = userRes.rows[0];
-        const token = crypto.randomBytes(32).toString("hex");
-        const expires = new Date(Date.now() + 3600000); // 1 hour from now
-
-        await pool.query(
-            "UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3",
-            [token, expires, user.id]
-        );
+        const token = generateJWT({ id: user.id }, '1h');
 
         const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${email}`;
         await sendPasswordResetEmail(user, resetLink);
@@ -252,25 +244,20 @@ const resetPassword = async (req, res) => {
     try {
         const { email, token, password } = req.body;
 
-        if (!email || !token || !password) {
-            return res.status(400).json({ success: false, message: "All fields are required" });
+        if (!token || !password) {
+            return res.status(400).json({ success: false, message: "Token and password are required" });
         }
 
-        const userRes = await pool.query(
-            "SELECT id FROM users WHERE email = $1 AND reset_password_token = $2 AND reset_password_expires > NOW()",
-            [email, token]
-        );
-
-        if (userRes.rows.length === 0) {
+        const decoded = verifyJWT(token);
+        if (!decoded || !decoded.id) {
             return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
         }
 
-        const user = userRes.rows[0];
         const hashedPassword = await bcrypt.hash(password, 12);
 
         await pool.query(
-            "UPDATE users SET password = $1, reset_password_token = NULL, reset_password_expires = NULL WHERE id = $2",
-            [hashedPassword, user.id]
+            "UPDATE users SET password = $1 WHERE id = $2",
+            [hashedPassword, decoded.id]
         );
 
         res.status(200).json({ success: true, message: "Password reset successfully" });

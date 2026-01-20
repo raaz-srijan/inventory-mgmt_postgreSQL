@@ -14,6 +14,6 @@ router.put("/update-profile", authMiddleware, updateProfile);
 
 // Staff management
 router.put("/staff/:id", authMiddleware, checkPermission(["manage_business_roles", "manage_staff_roles"]), updateStaff);
-router.delete("/staff/:id", authMiddleware, checkPermission(["manage_business_roles"]), deleteStaff); // Strictly for owner? or maybe manager too? 
+router.delete("/staff/:id", authMiddleware, checkPermission(["manage_business_roles"]), deleteStaff);  
 
 module.exports = router;

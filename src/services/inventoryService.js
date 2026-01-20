@@ -11,7 +11,7 @@ class InventoryService {
              RETURNING *`,
             [name, stock, price, businessId]
         );
-        return result.rows[0];
+        return result.rows[0];      
     }
 
     async getBusinessItems(businessId, page = 1, limit = 10) {
