@@ -8,6 +8,10 @@ const pool = new Pool({
   database: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASS,
   port: Number(process.env.POSTGRES_PORT),
+  ssl:{
+    require:true,
+    rejectUnauthorized: false,
+  },
 });
 
 module.exports = pool;
