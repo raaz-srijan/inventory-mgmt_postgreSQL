@@ -31,7 +31,7 @@ const ticketRoute = require("./routes/ticketRoute");
 const roleRoute = require("./routes/roleRoute");
 const noticeRoute = require("./routes/noticeRoute");
 const messageRoute = require("./routes/messageRoute");
-const adminRoute = require("./routes/adminRoute"); 
+const adminRoute = require("./routes/adminRoute");
 
 app.use("/api/v1/business", businessRoute);
 app.use("/api/v1/auth", authRoute);
@@ -40,7 +40,7 @@ app.use("/api/v1/tickets", ticketRoute);
 app.use("/api/v1/roles", roleRoute);
 app.use("/api/v1/notices", noticeRoute);
 app.use("/api/v1/messages", messageRoute);
-app.use("/api/v1/admins", adminRoute); 
+app.use("/api/v1/admins", adminRoute);
 
 async function syncDb() {
     try {
@@ -64,6 +64,10 @@ async function syncDb() {
                 IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_businesses_users') THEN
                     ALTER TABLE users ADD CONSTRAINT fk_businesses_users 
                     FOREIGN KEY (business_id) REFERENCES businesses(id);
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='created_at') THEN
+                    ALTER TABLE businesses ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
                 END IF;
             END $$;
         `);

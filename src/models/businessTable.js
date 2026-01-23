@@ -1,8 +1,8 @@
 const pool = require("../config/connectDb");
 
 async function businessTable() {
-try {
-    await pool.query(`
+    try {
+        await pool.query(`
         CREATE TABLE IF NOT EXISTS businesses(
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -14,17 +14,18 @@ try {
         citizenship_back VARCHAR(255) NOT NULL,
         is_verified BOOLEAN DEFAULT FALSE,
         owner_id INTEGER DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
         CONSTRAINT fk_users_businesses
         FOREIGN KEY (owner_id)
         REFERENCES users(id)
         );
         `)
-        console.log(`Business table created successfully`);     
+        console.log(`Business table created successfully`);
 
-} catch (error) {
-    console.error(`Error creating table`, error);
-}
+    } catch (error) {
+        console.error(`Error creating table`, error);
+    }
 
 }
 
